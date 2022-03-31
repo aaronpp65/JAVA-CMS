@@ -1,0 +1,245 @@
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.List;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
+public class Server {
+
+    public static void main(String[] args) throws Exception {
+        List<Socket> sockets =  new ArrayList<Socket>();
+        List<Integer> socketsFlag =  new ArrayList<Integer>();
+
+        try (var listener = new ServerSocket(59898)) {
+
+            System.out.println("The capitalization server is running...");
+            var pool = Executors.newFixedThreadPool(20);
+
+            pool.execute(new Heartbeat(sockets, socketsFlag));
+            
+
+
+            // By using writeObject() method of the ObjectOutputStream we can
+            // make the book object persistent on the books.dat file.
+       
+
+            while (true) {
+                System.out.println(Thread.getAllStackTraces().keySet().size());
+                // FileWriter myWriter = new FileWriter("db.txt",true);
+
+                // File originalFileUpdator = new File("db.txt");
+                // BufferedReader brUpdator = new BufferedReader(new FileReader(originalFileUpdator));
+                // BufferedWriter bufwriter = new BufferedWriter(new FileWriter(originalFileUpdator));
+
+                sockets.add(listener.accept());
+                socketsFlag.add(1);
+
+                // try (FileOutputStream fos = new FileOutputStream("books.dat");
+                //     ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                //     oos.writeObject(sockets.get(sockets.size()-1));
+                //  } 
+                //  catch (IOException e) {
+                //     e.printStackTrace();
+                // }
+                // try (FileInputStream fis = new FileInputStream("books.dat");
+                //     ObjectInputStream ois = new ObjectInputStream(fis)) {
+
+                //     // To read the Book object use the ObjectInputStream.readObject() method.
+                //     // This method return Object type data so we need to cast it back the its
+                //     // origin class, the Book class.
+                //     Socket book = (Socket) ois.readObject();
+                //     System.out.println(book.isClosed());
+
+                // } catch (IOException | ClassNotFoundException e) {
+                //     e.printStackTrace();
+                // }
+    
+                pool.execute(new Capitalizer(sockets.get(sockets.size()-1)));
+
+            }
+        }
+    }
+
+    private static class Capitalizer implements Runnable {
+        private Socket socket;
+        private int flag;
+        // private BufferedWriter bufwriter;
+        // private BufferedReader brUpdator;
+        private File originalFileUpdator = new File("db.txt");
+
+        Capitalizer(Socket socket) {
+            this.socket = socket;
+            this.flag=0;
+            // this.bufwriter = bufwriter;
+            // this.brUpdator=brUpdator;
+        }
+
+        @Override
+        public void run() {
+            System.out.println("Connected: " + socket.getPort());
+            try {
+                var in = new Scanner(socket.getInputStream());
+                var out = new PrintWriter(socket.getOutputStream(), true);
+                if(flag==0){
+                    out.println("Status : 201");
+                    flag=1;
+                }
+                else if(flag==1){
+                    out.println("Status : 200");
+
+                }
+                String temp = "";
+                String request =in.nextLine();
+                System.out.println(request);
+
+                if(request.equals("PUT")){
+
+                    BufferedWriter bufwriter = new BufferedWriter(new FileWriter(originalFileUpdator, true));
+
+                    System.out.println(socket.getPort()+request);
+                    while (in.hasNextLine()) {
+
+                        temp= in.nextLine();
+                        if(temp.equals("feedError")){
+
+                            out.println("Status : 204");
+                        }
+                        else{
+
+                            out.println(temp);
+
+
+                        }
+                        bufwriter.write(socket.getPort()+"~"+socket.isClosed()+"~"+temp+"\n");
+                        bufwriter.close();
+
+                    } 
+                }
+
+                else if(request.equals("GET")){
+
+                    BufferedReader brUpdator = new BufferedReader(new FileReader(originalFileUpdator));
+
+                    String line = null;
+                    while ((line = brUpdator.readLine()) != null) {
+                        String[] words = line.split("~");
+                        if(words[1].equals("false")){
+                            out.println(words[2]);
+                        }
+                    }
+                    brUpdator.close();
+
+
+                }
+                else{
+
+                    out.println("Status : 400");
+                }
+                
+
+            } catch (Exception e) {
+
+                System.out.println("Error:" + socket);
+
+            } finally {
+
+                try {
+                    socket.close();
+                    // myWriter.close();
+
+                } catch (IOException e) {
+
+                }
+                System.out.println("Closed: " + socket);
+            }
+        }
+    }
+
+    private static class Heartbeat implements Runnable {
+        private List<Socket> sockets;
+        private List<Integer> socketsFlag;
+
+        Heartbeat(List<Socket> sockets, List<Integer> socketsFlag) {
+            this.sockets = sockets;
+            this.socketsFlag = socketsFlag;
+            
+        }
+
+        @Override
+        public void run() {
+        try{  
+            
+            while(true){
+
+                for(int i=0;i<sockets.size();i++){
+
+                    // System.out.println(sockets.get(i).isClosed());
+                    // System.out.println(socketsFlag.get(i));
+
+                    if(sockets.get(i).isClosed() && socketsFlag.get(i)==1){
+
+                        socketsFlag.set(i, 0);
+                        File originalFile = new File("db.txt");
+                        BufferedReader br = new BufferedReader(new FileReader(originalFile));
+
+                        // Construct the new file that will later be renamed to the original
+                        // filename.
+                        File tempFile = new File("tempDb.txt");
+                        PrintWriter pw = new PrintWriter(new FileWriter(tempFile)); 
+                        String line = null;
+
+                        while ((line = br.readLine()) != null) {
+
+                            if (line.contains(String.valueOf(sockets.get(i).getPort()))) {
+                               String[] words = line.split("~");
+                               line = words[0]+"~true~"+words[2];
+
+                            }
+                            pw.println(line);
+                            pw.flush();
+                        }
+                        pw.close();
+                        br.close();
+
+                        // Delete the original file
+                        if (!originalFile.delete()) {
+                            System.out.println("Could not delete file");
+                            return;
+                        }
+
+                        // Rename the new file to the filename the original file had.
+                        if (!tempFile.renameTo(originalFile))
+                            System.out.println("Could not rename file");
+                    }
+
+                }
+
+                
+                Thread.sleep(3000);
+
+            }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+         
+        }
+    }
+
+}

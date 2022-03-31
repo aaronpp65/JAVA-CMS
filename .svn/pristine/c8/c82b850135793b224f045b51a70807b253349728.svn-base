@@ -1,0 +1,8 @@
+Reading lines. Ctrl+D or Ctrl+C to quit
+lamportsClock : 1
+Status : 201
+java.lang.NumberFormatException: null
+Reading lines. Ctrl+D or Ctrl+C to quit
+lamportsClock : 1
+Status : 201
+java.lang.NumberFormatException: null

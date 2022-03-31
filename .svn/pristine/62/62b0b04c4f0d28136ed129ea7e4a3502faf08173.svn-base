@@ -1,0 +1,181 @@
+# !/bin/bash
+
+clear
+echo 'Runnint test for multiple PUT followed by GET'
+
+
+# running server
+java Server &
+sleep 3
+
+#running content servers
+java ContentServer 127.0.0.1 content1.txt &
+# sleep 1
+java ContentServer 127.0.0.1 content2.txt &
+sleep 3
+
+java Client 127.0.0.1 >> outputClient.txt &
+sleep 3
+
+pkill -9 java
+
+# clear
+# echo 'Runnint test for GET only displaying data from live content servers'
+
+# # running server
+# java Server &
+# sleep 3
+
+# #running content servers
+# java ContentServer 127.0.0.1 content1.txt &
+# P1=$!
+# sleep 1
+# java ContentServer 127.0.0.1 content2.txt &
+# sleep 1
+
+# # kills the content server 
+# kill ${P1}
+
+# # wait 12 seconds to make sure heartbeat mechanism reflects in db.txt
+# sleep 12
+
+# java Client 127.0.0.1 > outputClient.txt &
+# sleep 3
+
+# pkill -9 java
+
+# clear
+# echo 'Runnint test for sequence PUT, GET, PUT, GET'
+
+# # running server
+# java Server &
+# sleep 3
+
+# #running content servers
+# java ContentServer 127.0.0.1 content1.txt &
+# sleep 1
+
+# java Client 127.0.0.1 >> outputClient.txt &
+# sleep 1
+
+# java ContentServer 127.0.0.1 content2.txt &
+# sleep 1
+
+# java Client 127.0.0.1 >> outputClient.txt &
+# sleep 1
+
+# pkill -9 java
+
+# clear
+# echo '#Runnint test for fault tolerance of content server' >> outputClient.txt
+
+# # running server
+# java Server &
+# sleep 3
+
+# #running content servers
+# java ContentServer 127.0.0.1 content1.txt &
+# P1=$!
+# sleep 1
+# # kills the content server 
+# kill ${P1}
+
+# # wait 12 seconds to make sure heartbeat mechanism reflects in db.txt
+# sleep 12
+# # starting the content server again (servers the same content)
+# java ContentServer 127.0.0.1 content1.txt &
+# sleep 1
+
+# # GET will display content1
+# java Client 127.0.0.1 >> outputClient.txt &
+# sleep 3
+
+# pkill -9 java
+
+# clear
+# echo '#Runnint test for fault tolerance of server' >> outputClient.txt
+
+# # running server
+# java Server &
+# P1=$!
+# sleep 3
+
+# #running content servers
+# java ContentServer 127.0.0.1 content1.txt &
+# sleep 1
+# java ContentServer 127.0.0.1 content2.txt &
+# sleep 1
+
+# kill ${P1}
+# sleep 1
+
+# java Server &
+# sleep 3
+
+# java Client 127.0.0.1 >> outputClient.txt &
+# sleep 10
+
+# pkill -9 java
+
+
+
+
+
+
+
+# # running client and writing o/p to file
+# java SorterClient > outputClient.txt &
+# P1=$!
+
+# # waiting to finish executing client
+# wait $P1
+
+# # killing server and rmiregistry
+# pkill -9 java
+# pkill -9 rmiregistry
+
+# # compare o/p with expected o/p
+# cmp --silent outputClient.txt expectedClientOutput.txt && o1= true || o1=false
+
+# if $o1 ; then
+#     echo 'Test with single client Succesful'
+# else
+# 	echo 'Test failed'
+# fi
+
+# echo 'Runnint test for server and multiple clients with their own stack'
+# rmiregistry &
+# sleep 3
+
+# # running server
+# java Server &
+# sleep 3
+
+# # running clients and writing o/p to file
+# java SorterClient > outputClient.txt &
+# P5=$!
+# java SorterClient > outputClient1.txt &
+# P2=$!
+# java SorterClient > outputClient2.txt &
+# P3=$!
+# java SorterClient > outputClient3.txt &
+# P4=$!
+
+# # waiting to finish executing clients
+# wait $P2 
+# wait $P4 
+# wait $P3 
+# wait $P5
+
+# # killing server and rmiregistry
+# pkill -9 java
+# pkill -9 rmiregistry
+
+# # compare o/p with expected o/p
+# diff --from-file expectedClientOutput.txt outputClient.txt outputClient1.txt outputClient2.txt outputClient3.txt && o1= true || o1=false
+
+# if $o1 ; then
+#     echo 'Test Succesful for multiple clients'
+# else
+# 	echo 'Test failed'
+# fi

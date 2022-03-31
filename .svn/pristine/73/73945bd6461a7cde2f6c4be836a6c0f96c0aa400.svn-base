@@ -1,0 +1,146 @@
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;  
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import java.io.File;
+
+public class CreateXml{
+
+   public static void main(String argv[]) {
+
+      try {
+         DocumentBuilderFactory dbFactory =
+         DocumentBuilderFactory.newInstance();
+         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+         Document doc = dBuilder.newDocument();
+         int rejectCounter=0;
+
+         //reading file and making objects
+         File file = new File(filename);
+         int flag=0;
+         BufferedReader br = new BufferedReader(new FileReader(file));
+         String st,atomFeed="";
+
+         
+         // root element
+         Element rootElement = doc.createElement("feed");
+         doc.appendChild(rootElement);
+         while ((st = br.readLine()) != null) {
+
+            String[] words=st.split(":");
+
+            if(!words[0].equals("entry")){
+               // carname element
+               Element words[0] = doc.createElement(words[0]);
+               words[0].appendChild(doc.createTextNode(words[1]));
+               rootElement.appendChild(words[0]);
+                // atomFeed+=title.get(0)+"\n";
+                // atomFeed+=words[1]+"\n";
+                // atomFeed+=title.get(1)+"\n";
+                rejectCounter++;
+
+            }else if(words[0].equals("subtitle")){
+                atomFeed+=subtitle.get(0)+"\n";
+                atomFeed+=words[1]+"\n";
+                atomFeed+=subtitle.get(1)+"\n";
+
+            }else if(words[0].equals("link")){
+                atomFeed+=link.get(0)+"\n";
+                atomFeed+=words[1]+"\n";
+                atomFeed+=link.get(1)+"\n";
+                rejectCounter++;
+
+
+            }else if(words[0].equals("updated")){
+                atomFeed+=updated.get(0)+"\n";
+                atomFeed+=words[1]+":"+words[2]+":"+words[3]+"\n";
+                atomFeed+=updated.get(1)+"\n";
+
+            }else if(words[0].equals("author")){
+                atomFeed+=author.get(0)+"\n";
+                atomFeed+=name.get(0)+"\n";
+                atomFeed+=words[1]+"\n";
+                atomFeed+=name.get(1)+"\n";
+                atomFeed+=author.get(1)+"\n";
+
+            }else if(words[0].equals("id")){
+                atomFeed+=id.get(0)+"\n";
+                atomFeed+=words[1]+":"+words[2]+":"+words[3]+"\n";
+                atomFeed+=id.get(1)+"\n";
+                rejectCounter++;
+
+
+            }else if(words[0].equals("summary")){
+                atomFeed+=summary.get(0)+"\n";
+                atomFeed+=words[1]+"\n";
+                atomFeed+=summary.get(1)+"\n";
+
+            }else if(words[0].equals("entry")){
+
+                if(flag==0){
+                    atomFeed+=entry.get(0)+"\n";
+                    flag=1;
+                }                 
+                else{
+                    atomFeed+=entry.get(1)+"\n";
+                    atomFeed+=entry.get(0)+"\n";
+                }
+
+            }
+
+
+        }
+
+         // supercars element
+         Element supercar = doc.createElement("supercars");
+         rootElement.appendChild(supercar);
+
+         // setting attribute to element
+         Attr attr = doc.createAttribute("company");
+         attr.setValue("Ferrari");
+         supercar.setAttributeNode(attr);
+
+         // carname element
+         Element carname = doc.createElement("carname");
+         Attr attrType = doc.createAttribute("type");
+         attrType.setValue("formula one");
+         carname.setAttributeNode(attrType);
+         carname.appendChild(doc.createTextNode("Ferrari 101"));
+         supercar.appendChild(carname);
+
+         Element carname1 = doc.createElement("carname");
+         Attr attrType1 = doc.createAttribute("type");
+         attrType1.setValue("sports");
+         carname1.setAttributeNode(attrType1);
+         carname1.appendChild(doc.createTextNode("Ferrari 202"));
+         supercar.appendChild(carname1);
+
+         // write the content into xml file
+         TransformerFactory transformerFactory = TransformerFactory.newInstance();
+         Transformer transformer = transformerFactory.newTransformer();
+         DOMSource source = new DOMSource(doc);
+         // StreamResult result = new StreamResult(new File("C:\\cars.xml"));
+         // transformer.transform(source, result);
+         // Output to console for testing
+         StringWriter writer = new StringWriter();
+
+         StreamResult consoleResult = new StreamResult(writer);
+
+         // StreamResult result = new StreamResult(writer);
+
+         transformer.transform(source, consoleResult);
+         String strResult = writer.toString();
+         System.out.println(strResult);
+
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+   }
+}
