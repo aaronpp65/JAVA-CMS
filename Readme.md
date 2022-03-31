@@ -1,9 +1,13 @@
-# Distributed Systems
+# Content Managment System
 
-## Assignment 2 
 
-Aaron Peter Poruthoor
-a1835075
+A client/server system that aggregates and distributes ATOM feeds.
+
+The main elements are:
+
+*An ATOM server (or aggregation server) that responds to requests for feeds and also accepts feed updates from clients. The aggregation server will store feed information persistently, only removing it when the content server who provided it is no longer in contact, or when the feed item is not one of the most recent 20.
+*A client that makes an HTTP GET request to the server and then displays the feed data, stripped of its XML information.
+*A CONTENT SERVER that makes an HTTP PUT request to the server and then uploads a new version of the feed to the server, replacing the old one. This feed information is assembled into ATOM XML after being read from a file on the content server's local filesystem.
 
 ### Compling
 
